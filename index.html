@@ -102,6 +102,13 @@
       line-height: 1.6;
     }
 
+    .date-range {
+      margin: 6px 0 0;
+      color: var(--accent-deep);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -204,8 +211,37 @@
       outline-offset: 1px;
     }
 
+    .day-chip.selected {
+      outline: 2.5px solid var(--accent);
+      outline-offset: 1px;
+      background: linear-gradient(180deg, rgba(233, 252, 245, 0.98), rgba(255, 255, 255, 0.98));
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(31, 143, 107, 0.15);
+    }
+
     .day-chip.future {
       background: rgba(255, 255, 255, 0.5);
+    }
+
+    .day-chip {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .day-chip:hover {
+      transform: translateY(-2px);
+      border-color: rgba(31, 143, 107, 0.25);
+    }
+
+    .selected-day-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 0.82rem;
+      font-weight: 800;
     }
 
     .day-label {
@@ -355,6 +391,61 @@
       font-size: 0.92rem;
       font-weight: 800;
       box-shadow: 0 10px 18px rgba(18, 102, 75, 0.2);
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .share-section {
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+    }
+
+    .share-title {
+      margin: 0 0 6px;
+      font-size: 1.06rem;
+      font-weight: 800;
+    }
+
+    .share-copy {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.55;
+    }
+
+    .share-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-pdf {
+      background: linear-gradient(180deg, #d45d2c, #a8431e);
+      box-shadow: 0 10px 18px rgba(168, 67, 30, 0.2);
+    }
+
+    .btn-whatsapp {
+      background: linear-gradient(180deg, #25d366, #128c3e);
+      box-shadow: 0 10px 18px rgba(18, 140, 62, 0.2);
+    }
+
+    .btn-pdf .btn-icon,
+    .btn-whatsapp .btn-icon {
+      margin-right: 6px;
+      font-size: 1.05rem;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .mini-note {
@@ -401,6 +492,7 @@
       <p class="eyebrow">7 Day Challenge</p>
       <h1>7日心靈第二心跳挑戰卡</h1>
       <p class="subtitle">每日用手機打剔，將心思慢慢對準耶穌。你可以按今日狀態，揀屬於自己嘅 Trigger 點。</p>
+      <p class="date-range">📅 挑戰期間：3 月 22 日（日）至 3 月 28 日（六）</p>
     </section>
 
     <section class="stats" aria-label="挑戰概覽">
@@ -426,8 +518,8 @@
     </section>
 
     <section class="panel" aria-labelledby="panelTitle">
-      <h2 class="panel-title" id="panelTitle">請打剔，揀你今日嘅「專屬 Trigger 點」</h2>
-      <p class="panel-copy">唔需要一次過做晒。今日最容易入手嘅，就由嗰一個開始。</p>
+      <h2 class="panel-title" id="panelTitle">請打剔，揀你嘅「專屬 Trigger 點」<span class="selected-day-badge" id="selectedDayBadge"></span></h2>
+      <p class="panel-copy">點擊上面嘅日期切換，揀你想記錄嘅日子。</p>
 
       <div class="trigger-list">
         <label class="trigger" for="trigger-morning">
@@ -473,11 +565,28 @@
       </div>
     </section>
 
+    <section class="share-section" aria-labelledby="shareTitle">
+      <h2 class="share-title" id="shareTitle">📤 分享挑戰報告</h2>
+      <p class="share-copy">匯出你嘅 7 日挑戰進度成為 PDF，或者直接分享去 WhatsApp 俾朋友一齊參與！</p>
+      <div class="share-buttons">
+        <button type="button" class="btn-pdf" id="downloadPdf">
+          <span class="btn-icon">📄</span>下載 PDF
+        </button>
+        <button type="button" class="btn-whatsapp" id="shareWhatsapp">
+          <span class="btn-icon">💬</span>WhatsApp 分享
+        </button>
+      </div>
+    </section>
+
     <p class="mini-note">勾選狀態會自動保存在你部手機瀏覽器內。去到第二日會顯示新一日清單，而最近 7 日記錄會保留。</p>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const STORAGE_KEY = "second-heartbeat-challenge-v1";
+    const CHALLENGE_START = new Date(2026, 2, 22); // 3月22日
+    const CHALLENGE_END = new Date(2026, 2, 28);   // 3月28日
     const triggerInputs = Array.from(document.querySelectorAll("input[type='checkbox'][data-key]"));
     const weekGrid = document.getElementById("weekGrid");
     const todayLabel = document.getElementById("todayLabel");
@@ -485,8 +594,10 @@
     const completionPill = document.getElementById("completionPill");
     const saveStatus = document.getElementById("saveStatus");
     const clearTodayButton = document.getElementById("clearToday");
+    const selectedDayBadge = document.getElementById("selectedDayBadge");
 
     const locale = "zh-HK";
+    let selectedDayKey = null; // tracks which day is currently selected for editing
 
     function formatStorageDate(date) {
       const year = date.getFullYear();
@@ -540,7 +651,7 @@
       return Object.values(dayState).filter(Boolean).length;
     }
 
-    function applyTodayState(dayState) {
+    function applyDayState(dayState) {
       triggerInputs.forEach((input) => {
         const checked = Boolean(dayState[input.dataset.key]);
         input.checked = checked;
@@ -549,18 +660,38 @@
       todayCount.textContent = String(countChecked(dayState));
     }
 
+    function selectDay(dayKey) {
+      selectedDayKey = dayKey;
+      const state = loadState();
+      const dayState = state.days[dayKey] || {};
+      applyDayState(dayState);
+      // parse dayKey to show display date
+      const parts = dayKey.split("-");
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      selectedDayBadge.textContent = formatDisplayDate(d) + "（" + formatDayLabel(d) + "）";
+      todayCount.textContent = String(countChecked(dayState));
+      // highlight selected chip
+      weekGrid.querySelectorAll(".day-chip").forEach((c) => c.classList.remove("selected"));
+      const chips = weekGrid.querySelectorAll(".day-chip");
+      chips.forEach((c) => {
+        if (c.dataset.dayKey === dayKey) c.classList.add("selected");
+      });
+      setStatus(countChecked(dayState) > 0 ? "已載入記錄" : "未打剔");
+    }
+
     function renderWeek(state, today) {
       weekGrid.innerHTML = "";
       let completedDays = 0;
-      let todayChip = null;
+      let selectedChip = null;
+      const todayKey = formatStorageDate(today);
 
-      for (let offset = 3; offset >= -3; offset -= 1) {
-        const day = new Date(today);
-        day.setDate(today.getDate() - offset);
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(CHALLENGE_START);
+        day.setDate(CHALLENGE_START.getDate() + i);
         const dayKey = formatStorageDate(day);
         const dayState = state.days[dayKey] || {};
         const doneCount = countChecked(dayState);
-        const isFuture = offset < 0;
+        const isFuture = dayKey > todayKey;
 
         if (doneCount > 0 && !isFuture) {
           completedDays += 1;
@@ -568,16 +699,25 @@
 
         const chip = document.createElement("div");
         chip.className = "day-chip";
+        chip.dataset.dayKey = dayKey;
         if (isFuture) {
           chip.classList.add("future");
         }
         if (doneCount > 0) {
           chip.classList.add("active");
         }
-        if (offset === 0) {
+        if (dayKey === todayKey) {
           chip.classList.add("today");
-          todayChip = chip;
         }
+        if (dayKey === selectedDayKey) {
+          chip.classList.add("selected");
+          selectedChip = chip;
+        }
+
+        // click to select day
+        chip.addEventListener("click", () => {
+          selectDay(dayKey);
+        });
 
         chip.innerHTML =
           '<div class="day-label">' + formatDayLabel(day) + "</div>" +
@@ -589,9 +729,10 @@
 
       completionPill.textContent = completedDays + " / 7 日";
 
-      if (todayChip && window.matchMedia("(max-width: 559px)").matches) {
+      const scrollTarget = selectedChip || weekGrid.querySelector(".today");
+      if (scrollTarget && window.matchMedia("(max-width: 559px)").matches) {
         requestAnimationFrame(() => {
-          todayChip.scrollIntoView({
+          scrollTarget.scrollIntoView({
             block: "nearest",
             inline: "center"
           });
@@ -608,43 +749,157 @@
       const todayKey = formatStorageDate(now);
       const state = loadState();
       pruneOldDays(state, now);
-      const todayState = getTodayState(state, todayKey);
       saveState(state);
 
       todayLabel.textContent = formatDisplayDate(now);
-      applyTodayState(todayState);
+
+      // default select today on first load
+      if (!selectedDayKey) {
+        selectedDayKey = todayKey;
+      }
+      const activeDayState = state.days[selectedDayKey] || {};
+      applyDayState(activeDayState);
       renderWeek(state, now);
-      setStatus(countChecked(todayState) > 0 ? "已自動保存" : "今日未打剔");
+      // update badge
+      const parts = selectedDayKey.split("-");
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      selectedDayBadge.textContent = formatDisplayDate(d) + "（" + formatDayLabel(d) + "）";
+      setStatus(countChecked(activeDayState) > 0 ? "已自動保存" : "未打剔");
     }
 
     triggerInputs.forEach((input) => {
       input.addEventListener("change", () => {
-        const now = new Date();
-        const todayKey = formatStorageDate(now);
+        if (!selectedDayKey) return;
         const state = loadState();
-        pruneOldDays(state, now);
-        const todayState = getTodayState(state, todayKey);
-
-        todayState[input.dataset.key] = input.checked;
+        if (!state.days[selectedDayKey]) state.days[selectedDayKey] = {};
+        state.days[selectedDayKey][input.dataset.key] = input.checked;
         saveState(state);
 
         input.closest(".trigger").classList.toggle("checked", input.checked);
-        todayCount.textContent = String(countChecked(todayState));
-        renderWeek(state, now);
+        todayCount.textContent = String(countChecked(state.days[selectedDayKey]));
+        renderWeek(state, new Date());
         setStatus("剛剛已保存");
       });
     });
 
     clearTodayButton.addEventListener("click", () => {
-      const now = new Date();
-      const todayKey = formatStorageDate(now);
+      if (!selectedDayKey) return;
       const state = loadState();
-      pruneOldDays(state, now);
-      state.days[todayKey] = {};
+      state.days[selectedDayKey] = {};
       saveState(state);
-      applyTodayState(state.days[todayKey]);
-      renderWeek(state, now);
-      setStatus("今日記錄已清除");
+      applyDayState(state.days[selectedDayKey]);
+      renderWeek(state, new Date());
+      setStatus("記錄已清除");
+    });
+
+    // --- PDF Download ---
+    const downloadPdfBtn = document.getElementById("downloadPdf");
+    const shareWhatsappBtn = document.getElementById("shareWhatsapp");
+
+    function buildReportSummary() {
+      const state = loadState();
+      const triggerNames = { morning: "朝早起身", commute: "搭車/碎片", stress: "壓力爆煲", night: "臨瞓前" };
+      let totalChecked = 0;
+      let daysWithAny = 0;
+      const lines = [];
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(CHALLENGE_START);
+        day.setDate(CHALLENGE_START.getDate() + i);
+        const dayKey = formatStorageDate(day);
+        const dayState = state.days[dayKey] || {};
+        const n = countChecked(dayState);
+        totalChecked += n;
+        if (n > 0) daysWithAny++;
+        const items = Object.entries(dayState).filter(([, v]) => v).map(([k]) => triggerNames[k] || k).join("、");
+        lines.push(formatDisplayDate(day) + "（" + formatDayLabel(day) + "）：" + (n > 0 ? n + " 項 ✅ — " + items : "未剔 ⬜"));
+      }
+      return { totalChecked, daysWithAny, lines };
+    }
+
+    downloadPdfBtn.addEventListener("click", async () => {
+      downloadPdfBtn.disabled = true;
+      downloadPdfBtn.textContent = "生成中…";
+      try {
+        const { totalChecked, daysWithAny, lines } = buildReportSummary();
+
+        // 動態建立一個隱藏嘅 div 報告用嚟截圖
+        const reportDiv = document.createElement("div");
+        reportDiv.style.cssText = "position:absolute;left:-9999px;top:-9999px;width:600px;padding:40px;background:#ffffff;font-family:'Noto Sans HK','PingFang HK',sans-serif;color:#1d2a2f;box-sizing:border-box;";
+        reportDiv.innerHTML = `
+          <h1 style="font-size:26px;margin:0 0 10px;color:#1f8f6b;">🙏 7日心靈第二心跳挑戰卡</h1>
+          <p style="font-size:16px;margin:0 0 26px;color:#5c6e74;font-weight:bold;">📅 3月22日 — 3月28日</p>
+          <div style="background:#f4fbf5;border:1px solid rgba(31,143,107,0.2);padding:18px;border-radius:12px;margin-bottom:28px;">
+            <p style="margin:0 0 10px;font-size:18px;font-weight:900;">📊 挑戰進度：<span style="color:#1f8f6b">${daysWithAny}/7</span> 日完成</p>
+            <p style="margin:0;font-size:18px;font-weight:900;">✅ 總共打剔：<span style="color:#1f8f6b">${totalChecked}</span> 項</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            ${lines.map(l => `<div style="padding-bottom:12px;border-bottom:1px solid rgba(29,42,47,0.08);font-size:16px;line-height:1.5;">${l}</div>`).join("")}
+          </div>
+          <p style="margin:36px 0 0;text-align:center;font-weight:900;color:#1f8f6b;font-size:19px;letter-spacing:1px;">一齊挑戰！💪</p>
+        `;
+        document.body.appendChild(reportDiv);
+
+        const canvas = await html2canvas(reportDiv, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false
+        });
+
+        document.body.removeChild(reportDiv);
+        const imgData = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+
+        // A4 dimensions in mm
+        const pdfW = 210;
+        const pdfH = 297;
+        const margin = 12;
+        const contentW = pdfW - margin * 2;
+        const imgRatio = canvas.height / canvas.width;
+        const contentH = contentW * imgRatio;
+
+        const pdf = new jsPDF({
+          orientation: contentH > pdfH - margin * 2 ? "p" : "p",
+          unit: "mm",
+          format: "a4"
+        });
+
+        // If the image is too tall, scale to fit page
+        let finalW = contentW;
+        let finalH = contentH;
+        if (finalH > pdfH - margin * 2) {
+          finalH = pdfH - margin * 2;
+          finalW = finalH / imgRatio;
+        }
+        const x = (pdfW - finalW) / 2;
+        const y = margin;
+
+        pdf.addImage(imgData, "PNG", x, y, finalW, finalH);
+        pdf.save("7日心靈挑戰報告.pdf");
+      } catch (err) {
+        alert("PDF 生成失敗：" + err.message);
+      } finally {
+        downloadPdfBtn.disabled = false;
+        downloadPdfBtn.innerHTML = '<span class="btn-icon">📄</span>下載 PDF';
+      }
+    });
+
+    // --- WhatsApp Share ---
+    shareWhatsappBtn.addEventListener("click", () => {
+      const { totalChecked, daysWithAny, lines } = buildReportSummary();
+      const msg = [
+        "🙏 7日心靈第二心跳挑戰卡",
+        "📅 3月22日 — 3月28日",
+        "",
+        "📊 挑戰進度：" + daysWithAny + "/7 日完成",
+        "✅ 總共打剔：" + totalChecked + " 項",
+        "",
+        ...lines,
+        "",
+        "一齊挑戰！💪"
+      ].join("\n");
+      const url = "https://wa.me/?text=" + encodeURIComponent(msg);
+      window.open(url, "_blank");
     });
 
     refresh();
